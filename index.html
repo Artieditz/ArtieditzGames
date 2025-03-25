@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Artieditz Game Collection</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: lightgray;
+      text-align: center;
+    }
+    header {
+      background-color: black;
+      color: white;
+      padding: 20px;
+    }
+    .game-link {
+      display: inline-block;
+      margin: 20px;
+      padding: 15px 30px;
+      background-color: blue;
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+      border-radius: 5px;
+    }
+    .game-link:hover {
+      background-color: darkblue;
+    }
+    footer {
+      margin-top: 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome to Artieditz Game Collection</h1>
+  </header>
+  <main>
+    <h2>Click a game to play:</h2>
+    <!-- Direct links to game files -->
+    <a href="circle_road_game.html" class="game-link">Game 1: Circle Road Game</a><br>
+    <a href="flappy_pixel.html" class="game-link">Game 2: Flappy Pixel</a><br>
+    <a href="rolling_wheel_game.html" class="game-link">Game 3: Rolling Wheel Game</a>
+  </main>
+  <footer>
+    <p id="visitor-count">Visitors: Loading...</p>
+  </footer>
+  <script>
+    // Simple visitor counter using localStorage (for demonstration only)
+    const countElement = document.getElementById("visitor-count");
+    let visitorCount = localStorage.getItem("visitorCount");
+    if (!visitorCount) {
+      visitorCount = 0;
+    }
+    visitorCount++;
+    localStorage.setItem("visitorCount", visitorCount);
+    countElement.textContent = `Visitors: ${visitorCount}`;
+  </script>
+</body>
+</html>
