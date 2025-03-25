@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rolling Wheel Runner</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      background: lightblue;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // Set canvas size
+  canvas.width = 900;
+  canvas.height = 500;
+
+  // Wheel object
+  const wheel = {
+    x: 100,
+    y: canvas.height - 80,
+    radius: 30,
+    color: "orange",
+    velocityY: 0,
+    gravity: 0.4,
+    jumpForce: -12,
+    grounded: false,
+    rotation: 0
+  };
+
+  const rocks = [];
+  const coins = [];
+  const rockSpeed = 2; // Slower for smoother movement
+  const coinSpeed = 2;
+  const rockColors = ["gray", "darkgray", "black"];
+  const rockGap = 175; // Ensure consistent gaps
+
+  let score = 0;
+  let bestScore = 0;
+  let gameRunning = true;
+
+  function drawWheel() {
+    ctx.save();
+    ctx.translate(wheel.x, wheel.y);
+    ctx.rotate(wheel.rotation);
+    ctx.beginPath();
+    ctx.arc(0, 0, wheel.radius, 0, Math.PI * 2);
+    ctx.fillStyle = wheel.color;
+    ctx.fill();
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Add spokes to the wheel
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI * 2 * i) / 6;
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(angle) * wheel.radius, Math.sin(angle) * wheel.radius);
+    }
+    ctx.strokeStyle = "black";
+    ctx.stroke();
+    ctx.restore();
+
+    if (gameRunning) {
+      wheel.rotation += 0.1; // Smooth rotation
+    }
+  }
+
+  function drawRock(rock) {
+    ctx.fillStyle = rock.color;
+    ctx.fillRect(rock.x, rock.y, rock.width, rock.height);
+  }
+
+  function drawCoin(coin) {
+    ctx.beginPath();
+    ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+    ctx.fillStyle = "yellow";
+    ctx.fill();
+    ctx.strokeStyle = "gold";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  function updateWheel() {
+    wheel.velocityY += wheel.gravity;
+    wheel.y += wheel.velocityY;
+
+    if (wheel.y > canvas.height - 80) {
+      wheel.y = canvas.height - 80;
+      wheel.velocityY = 0;
+      wheel.grounded = true;
+    }
+  }
+
+  function updateRocks() {
+    rocks.forEach((rock, index) => {
+      rock.x -= rockSpeed;
+
+      if (rock.x + rock.width < 0) {
+        rocks.splice(index, 1); // Remove off-screen rocks
+      }
+
+      if (
+        wheel.x - wheel.radius < rock.x + rock.width &&
+        wheel.x + wheel.radius > rock.x &&
+        wheel.y - wheel.radius < rock.y + rock.height &&
+        wheel.y + wheel.radius > rock.y
+      ) {
+        gameRunning = false;
+        if (score > bestScore) {
+          bestScore = score; // Update best score
+        }
+      }
+    });
+
+    if (rocks.length === 0 || rocks[rocks.length - 1].x < canvas.width - rockGap) {
+      const randomWidth = Math.floor(Math.random() * 20) + 10; // Thinner rocks
+      const randomHeight = Math.floor(Math.random() * 40) + 30;
+      rocks.push({
+        x: canvas.width,
+        y: canvas.height - randomHeight - 50,
+        width: randomWidth,
+        height: randomHeight,
+        color: rockColors[Math.floor(Math.random() * rockColors.length)]
+      });
+    }
+  }
+
+  function updateCoins() {
+    coins.forEach((coin, index) => {
+      coin.x -= coinSpeed;
+
+      if (coin.x + coin.radius < 0) {
+        coins.splice(index, 1); // Remove off-screen coins
+      }
+
+      if (
+        wheel.x - wheel.radius < coin.x + coin.radius &&
+        wheel.x + wheel.radius > coin.x - coin.radius &&
+        wheel.y - wheel.radius < coin.y + coin.radius &&
+        wheel.y + wheel.radius > coin.y - coin.radius
+      ) {
+        score += 5;
+        coins.splice(index, 1);
+      }
+    });
+
+    if (Math.random() < 0.02) {
+      const randomY = canvas.height - Math.floor(Math.random() * 100) - 80; // Lower position
+      coins.push({
+        x: canvas.width,
+        y: randomY,
+        radius: 15
+      });
+    }
+  }
+
+  function drawScore() {
+    ctx.fillStyle = "black";
+    ctx.font = "20px Arial";
+    ctx.fillText(`Score: ${score}`, 10, 30);
+    ctx.fillText(`Best Score: ${bestScore}`, 10, 60);
+  }
+
+  function restartGame(event) {
+    if (!gameRunning && event.type === "click") {
+      score = 0;
+      rocks.length = 0;
+      coins.length = 0;
+      gameRunning = true;
+      canvas.removeEventListener("click", restartGame);
+      gameLoop();
+    }
+  }
+
+  function gameLoop() {
+    if (!gameRunning) {
+      ctx.fillStyle = "red";
+      ctx.font = "40px Arial";
+      ctx.fillText("Game Over", canvas.width / 2 - 100, canvas.height / 2);
+      ctx.font = "20px Arial";
+      ctx.fillText("Click to Restart", canvas.width / 2 - 80, canvas.height / 2 + 40);
+      canvas.addEventListener("click", restartGame);
+      return;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    updateWheel();
+    updateRocks();
+    updateCoins();
+
+    drawWheel();
+    rocks.forEach(drawRock);
+    coins.forEach(drawCoin);
+    drawScore();
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.code === "Space" && wheel.grounded) {
+      wheel.velocityY = wheel.jumpForce;
+      wheel.grounded = false;
+    }
+  });
+
+  gameLoop();
+</script>
+</body>
+</html>
